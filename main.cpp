@@ -1,10 +1,12 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <sstream>
+#include <limits>
 using namespace std;
 
 enum Color { RED, BLACK };
 
+// Node structure for the Red-Black Tree
 struct Node {
     int key;
     Color color;
@@ -18,6 +20,7 @@ class RBTree {
 private:
     Node* root;
 
+    // -------- LEFT ROTATION --------
     void rotateLeft(Node* x) {
         Node* y = x->right;
         x->right = y->left;
@@ -38,6 +41,7 @@ private:
         x->parent = y;
     }
 
+    // -------- RIGHT ROTATION --------
     void rotateRight(Node* x) {
         Node* y = x->left;
         x->left = y->right;
@@ -58,6 +62,7 @@ private:
         x->parent = y;
     }
 
+    // -------- FIX TREE AFTER INSERT --------
     void fixInsert(Node* z) {
         while (z->parent && z->parent->color == RED) {
             Node* gp = z->parent->parent;
@@ -105,6 +110,7 @@ private:
         root->color = BLACK;
     }
 
+    // -------- PRINT TREE (ORIGINAL FORMAT, FIXED) --------
     void printHelper(Node* node, int indent) {
         if (!node) return;
 
@@ -115,7 +121,17 @@ private:
         cout << endl;
         for (int i = 6; i < indent; i++)
             cout << " ";
-        cout << node->key << (node->color == RED ? "(R)" : "(B)") << endl;
+
+        // EXACT original format: key + (R/B)
+        cout << node->key << (node->color == RED ? "(R)" : "(B)");
+
+        // Add parent info WITHOUT affecting alignment
+        cout << " [P:";
+        if (node->parent)
+            cout << node->parent->key;
+        else
+            cout << "N";
+        cout << "]";
 
         printHelper(node->left, indent);
     }
@@ -123,7 +139,13 @@ private:
 public:
     RBTree() : root(nullptr) {}
 
+    // -------- INSERT A NEW KEY (1–999) --------
     void insert(int key) {
+        if (key < 1 || key > 999) {
+            cout << "Ignoring invalid key (must be 1–999): " << key << endl;
+            return;
+        }
+
         Node* z = new Node(key);
         Node* y = nullptr;
         Node* x = root;
@@ -148,10 +170,28 @@ public:
         fixInsert(z);
     }
 
+    // -------- READ NUMBERS FROM FILE --------
+    void readFromFile(const string& filename) {
+        ifstream file(filename);
+
+        if (!file.is_open()) {
+            cout << "Error: Could not open " << filename << endl;
+            return;
+        }
+
+        int value;
+        while (file >> value) {
+            insert(value);
+        }
+
+        cout << "Finished reading from " << filename << endl;
+    }
+
+    // -------- PUBLIC PRINT --------
     void print() {
         cout << "\n===== TREE =====\n";
         printHelper(root, 0);
-        cout << "================\n";
+        cout << "\n================\n";
     }
 };
 
@@ -159,42 +199,47 @@ int main() {
     RBTree tree;
     int choice;
 
-    cout << "Choose input method:\n";
-    cout << "1. Enter numbers manually\n";
-    cout << "2. Load numbers from numbers.txt\n";
-    cout << "Selection: ";
-    cin >> choice;
+    while (true) {
+        cout << "\n--- Red-Black Tree Menu ---\n";
+        cout << "1. Add numbers manually\n";
+        cout << "2. Read numbers from numbers.txt\n";
+        cout << "3. Print tree\n";
+        cout << "4. Quit\n";
+        cout << "Selection: ";
 
-    if (choice == 1) {
-        int n, value;
-        cout << "How many numbers will you enter? ";
-        cin >> n;
-
-        for (int i = 0; i < n; i++) {
-            cout << "Enter number " << i + 1 << ": ";
-            cin >> value;
-            tree.insert(value);
-        }
-    }
-    else if (choice == 2) {
-        ifstream file("numbers.txt");
-        if (!file) {
-            cout << "Error: Could not open numbers.txt\n";
-            return 1;
+        if (!(cin >> choice)) {
+            cout << "Invalid input. Exiting.\n";
+            return 0;
         }
 
-        int value;
-        while (file >> value) {
-            tree.insert(value);
+        if (choice == 1) {
+            cout << "Enter numbers separated by spaces (1–999). Press ENTER when done:\n";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            string line;
+            getline(cin, line);
+
+            stringstream ss(line);
+            int value;
+
+            while (ss >> value) {
+                tree.insert(value);
+            }
         }
-
-        cout << "Loaded numbers from numbers.txt\n";
+        else if (choice == 2) {
+            tree.readFromFile("numbers.txt");
+        }
+        else if (choice == 3) {
+            tree.print();
+        }
+        else if (choice == 4) {
+            cout << "Goodbye.\n";
+            break;
+        }
+        else {
+            cout << "Invalid choice.\n";
+        }
     }
-    else {
-        cout << "Invalid choice.\n";
-        return 1;
-    }
 
-    tree.print();
     return 0;
 }
