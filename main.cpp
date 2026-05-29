@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <vector>
 using namespace std;
 
 enum Color { RED, BLACK };
@@ -16,7 +18,6 @@ class RBTree {
 private:
     Node* root;
 
-    // ---------------- ROTATIONS ----------------
     void rotateLeft(Node* x) {
         Node* y = x->right;
         x->right = y->left;
@@ -57,7 +58,6 @@ private:
         x->parent = y;
     }
 
-    // ---------------- FIX INSERT ----------------
     void fixInsert(Node* z) {
         while (z->parent && z->parent->color == RED) {
             Node* gp = z->parent->parent;
@@ -65,7 +65,6 @@ private:
             if (z->parent == gp->left) {
                 Node* uncle = gp->right;
 
-                // Case 1: Uncle is RED
                 if (uncle && uncle->color == RED) {
                     z->parent->color = BLACK;
                     uncle->color = BLACK;
@@ -73,12 +72,10 @@ private:
                     z = gp;
                 }
                 else {
-                    // Case 2: z is right child
                     if (z == z->parent->right) {
                         z = z->parent;
                         rotateLeft(z);
                     }
-                    // Case 3: z is left child
                     z->parent->color = BLACK;
                     gp->color = RED;
                     rotateRight(gp);
@@ -108,7 +105,6 @@ private:
         root->color = BLACK;
     }
 
-    // ---------------- PRINT TREE ----------------
     void printHelper(Node* node, int indent) {
         if (!node) return;
 
@@ -127,7 +123,6 @@ private:
 public:
     RBTree() : root(nullptr) {}
 
-    // ---------------- INSERT ----------------
     void insert(int key) {
         Node* z = new Node(key);
         Node* y = nullptr;
@@ -153,7 +148,6 @@ public:
         fixInsert(z);
     }
 
-    // ---------------- PUBLIC PRINT ----------------
     void print() {
         cout << "\n===== TREE =====\n";
         printHelper(root, 0);
@@ -163,16 +157,44 @@ public:
 
 int main() {
     RBTree tree;
+    int choice;
 
-    tree.insert(10);
-    tree.insert(20);
-    tree.insert(15);
-    tree.insert(5);
-    tree.insert(1);
-    tree.insert(25);
-    tree.insert(2);
+    cout << "Choose input method:\n";
+    cout << "1. Enter numbers manually\n";
+    cout << "2. Load numbers from numbers.txt\n";
+    cout << "Selection: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        int n, value;
+        cout << "How many numbers will you enter? ";
+        cin >> n;
+
+        for (int i = 0; i < n; i++) {
+            cout << "Enter number " << i + 1 << ": ";
+            cin >> value;
+            tree.insert(value);
+        }
+    }
+    else if (choice == 2) {
+        ifstream file("numbers.txt");
+        if (!file) {
+            cout << "Error: Could not open numbers.txt\n";
+            return 1;
+        }
+
+        int value;
+        while (file >> value) {
+            tree.insert(value);
+        }
+
+        cout << "Loaded numbers from numbers.txt\n";
+    }
+    else {
+        cout << "Invalid choice.\n";
+        return 1;
+    }
 
     tree.print();
-
     return 0;
 }
